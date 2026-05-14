@@ -24,8 +24,16 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
 
 #-----------Tasks-------------------------
 @task_router.get("/", response_model=list[TaskResponse])
-def get_tasks(db: Session = Depends(get_db)):
-   return db.query(Task).all()
+def get_tasks(completed: bool | None= None,task_type: str | None= None ,page: int =1, limit: int = 10 ,db: Session = Depends(get_db)):
+   query = db.query(Task)
+
+   if completed is not None:
+       query = query.filter(Task.completed == completed)
+
+   if task_type is not None:
+       query = query.filter(Task.task_type == task_type)   
+
+   return query.offset((page -1) * limit).limit(limit).all()   
 
 #-----------GetTask--------------------
 @task_router.get("/{task_id}", response_model=TaskResponse)
