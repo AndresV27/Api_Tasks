@@ -1,0 +1,51 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from src.database.db import get_db
+from src.models.task import Task
+from src.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
+
+task_router = APIRouter(prefix="/tasks", tags=["Tasks"])
+
+#-----------SearchTasks--------------------
+def get_task_or_404(task_id: int, db: Session)->Task:
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found" )
+    return task
+
+#-----------CreateTasks--------------------
+@task_router.post("/", response_model=TaskResponse)
+def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+    db_task = Task(**task.model_dump())
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
+
+#-----------Tasks-------------------------
+@task_router.get("/", response_model=list[TaskResponse])
+def get_tasks(db: Session = Depends(get_db)):
+   return db.query(Task).all()
+
+#-----------GetTask--------------------
+@task_router.get("/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    return get_task_or_404(task_id, db)
+
+#-----------UpdateTask--------------------
+@task_router.put("/{task_id}", response_model=TaskResponse)
+def update_task(task_id: int, task_data: TaskUpdate, db: Session = Depends(get_db)):
+    task = get_task_or_404(task_id, db)
+    for field, value in task_data.model_dump(exclude_unset=True).items():
+        setattr(task, field, value)
+    db.commit()
+    db.refresh(task)
+    return task   
+ 
+#-----------DeleteTask--------------------
+@task_router.delete("/{task_id}")
+def delete_task(task_id: int, db: Session= Depends(get_db)):
+    task = get_task_or_404(task_id, db)
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted"}
