@@ -3,19 +3,15 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.models.task import Task
 from src.schemas.task_schema import TaskCreate, TaskResponse, TaskUpdate
-
+from src.utils.helpers import get_task_or_404, get_user_or_404, validate_active_user
 task_router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
-#-----------SearchTasks--------------------
-def get_task_or_404(task_id: int, db: Session)->Task:
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found" )
-    return task
 
 #-----------CreateTasks--------------------
 @task_router.post("/", response_model=TaskResponse)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+    user = get_user_or_404(task.user_id, db)
+    validate_active_user(user)
     db_task = Task(**task.model_dump())
     db.add(db_task)
     db.commit()
@@ -44,6 +40,8 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 @task_router.put("/{task_id}", response_model=TaskResponse)
 def update_task(task_id: int, task_data: TaskUpdate, db: Session = Depends(get_db)):
     task = get_task_or_404(task_id, db)
+    user = get_user_or_404(task.user_id, db)
+    validate_active_user(user)
     for field, value in task_data.model_dump(exclude_unset=True).items():
         setattr(task, field, value)
     db.commit()
