@@ -5,6 +5,7 @@ class TaskBase(BaseModel):
     title: str
     description: str | None = None
     task_type: str
+    user_id: int
 
 class TaskCreate(TaskBase):
     pass
