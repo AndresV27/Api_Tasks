@@ -4,14 +4,18 @@ from src.database.db import get_db
 from src.models.user import User
 from src.schemas.user_schema import UserResponse , UserCreate, UserUpdate
 from src.utils.helpers import get_user_or_404, validate_active_user
-
+from src.utils.auth import hash_password
 user_router = APIRouter(prefix="/users", tags=["Users"])
 
 
 #-----------CreateUsers--------------------
 @user_router.post("/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = User(**user.model_dump())
+    db_user = User(
+        name = user.name,
+        email = user.email,
+        password = hash_password(user.password)
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
