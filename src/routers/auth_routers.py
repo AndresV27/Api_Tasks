@@ -3,14 +3,15 @@ from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.models.user import User
 from src.utils.auth import verify_password, create_access_token
-from src.schemas.auth_schema import LoginRequest, TokenResponse
+from src.schemas.auth_schema import TokenResponse
 from src.utils.helpers import validate_active_user
+from fastapi.security import OAuth2PasswordRequestForm
 
 auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @auth_router.post("/login", response_model= TokenResponse)
-def login(credentials: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == credentials.email).first()
+def login(credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == credentials.username).first()
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
