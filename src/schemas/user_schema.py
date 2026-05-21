@@ -12,6 +12,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    role_id: int | None = None
 
     class Config:
         from_atributes = True    
@@ -21,4 +22,5 @@ class UserUpdate(BaseModel):
     email: str | None = None
     password: str | None = None
 
-
+class UserRolerUpdate(BaseModel):
+    role_id: int

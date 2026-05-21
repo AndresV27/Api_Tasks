@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.database.db import get_db
 from src.models.user import User
-from src.schemas.user_schema import UserResponse , UserCreate, UserUpdate
+from src.schemas.user_schema import UserResponse , UserCreate, UserUpdate, UserRolerUpdate
 from src.utils.helpers import get_user_or_404, validate_active_user
 from src.utils.auth import hash_password
+from src.utils.dependencies import get_current_user, requiere_admin
 user_router = APIRouter(prefix="/users", tags=["Users"])
 
 
@@ -14,7 +15,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         name = user.name,
         email = user.email,
-        password = hash_password(user.password)
+        password = hash_password(user.password),
+        role_id = 2
     )
     db.add(db_user)
     db.commit()
@@ -55,5 +57,15 @@ def deactivate_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return user
+
+#-----------AssingRoleToUser--------------------
+@user_router.patch("/{user_id}/role", response_model= UserResponse)
+def assing_role(user_id: int, user_role: UserRolerUpdate ,db: Session = Depends(get_db), current_user: User = Depends(requiere_admin)):
+    user = get_user_or_404(user_id, db)
+    user.role_id = user_role.role_id
+    db.commit()
+    db.refresh(user)
+    return user
+
 
  
