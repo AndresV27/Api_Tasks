@@ -51,7 +51,7 @@ def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_d
 
 #-----------DeactivateUser--------------------
 @user_router.patch("/{user_id}/deactivate", response_model=UserResponse)
-def deactivate_user(user_id: int, db: Session = Depends(get_db)):
+def deactivate_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(requiere_admin)):
     user = get_user_or_404(user_id, db)
     user.is_active = False
     db.commit()
