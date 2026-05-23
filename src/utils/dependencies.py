@@ -8,6 +8,7 @@ from src.utils.helpers import validate_active_user
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+#-----------CurrentUser--------------------
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_access_token(token)
 
@@ -24,6 +25,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     return user
 
+#-----------VerifyUserIsAdmin--------------------
 def requiere_admin(current_user: User = Depends(get_current_user)):
     if current_user.role_id != 1:
         raise HTTPException(status_code=403, detail="Admin access required")

@@ -25,24 +25,34 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 #-----------Users-------------------------
 @user_router.get("/", response_model=list[UserResponse])
-def get_users(is_active: bool | None= None,page: int =1, limit: int = 10 ,db: Session = Depends(get_db)):
-   query = db.query(User)
+def get_users(
+    is_active: bool | None= None,
+    page: int =1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(requiere_admin)):
+   
+    query = db.query(User)
 
-   if is_active is not None:
+    if is_active is not None:
        query = query.filter(User.is_active == is_active)
 
-   return query.offset((page -1) * limit).limit(limit).all()  
+    return query.offset((page -1) * limit).limit(limit).all()  
  
 #-----------GetUser--------------------
 @user_router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    return get_user_or_404(user_id, db)
+def get_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = get_user_or_404(user_id, db)
+    if current_user.role_id != 1 and current_user.id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
 
 #-----------UpdateUser--------------------
 @user_router.put("/{user_id}", response_model=UserResponse)
-def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = get_user_or_404(user_id, db)
-    validate_active_user(user)
+    if current_user.role_id != 1 and current_user.id != user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
     for field, value in user_data.model_dump(exclude_unset=True).items():
         setattr(user, field, value)
     db.commit()
