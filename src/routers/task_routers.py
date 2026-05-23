@@ -27,8 +27,12 @@ def get_tasks(
     limit: int = 10 ,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)):
-   query = db.query(Task).filter(Task.user_id == current_user.id)
-
+   
+   if current_user.role_id == 1:
+       query = db.query(Task)
+   else:
+       query = db.query(Task).filter(Task.user_id == current_user.id)
+   
    if completed is not None:
        query = query.filter(Task.completed == completed)
 
