@@ -8,6 +8,8 @@ from src.routers.auth_routers import auth_router
 from contextlib import asynccontextmanager
 from src.utils.auth import hash_password
 from src.models.user import User
+from fastapi.middleware.cors import CORSMiddleware
+
 import os
 
 task.Base.metadata.create_all(bind=engine)
@@ -56,6 +58,14 @@ async def startup(app: FastAPI):
     yield         
 
 app = FastAPI(title="Task Manager API", lifespan= startup)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(task_router)
 app.include_router(user_router)

@@ -45,6 +45,7 @@ def get_user(user_id: int, db: Session = Depends(get_db), current_user: User = D
     user = get_user_or_404(user_id, db)
     if current_user.role_id != 1 and current_user.id != user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    return user
 
 #-----------UpdateUser--------------------
 @user_router.put("/{user_id}", response_model=UserResponse)
